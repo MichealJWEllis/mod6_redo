@@ -2,6 +2,7 @@ var userFormEl = document.querySelector("#user-form");
 var nameInputEl = document.querySelector("#username");
 var repoContainerEl = document.querySelector("#repos-container");
 var repoSearchTerm = document.querySelector("#repo-search-term");
+var languageButtonsEl = document.querySelector("#language-buttons");
 
 var formSubmitHandler = function (event) {
     event.preventDefault();
@@ -11,6 +12,7 @@ var formSubmitHandler = function (event) {
     if (username) {
         getUserRepos(username);
         nameInputEl.value = "";
+        repoContainerEl.textContent = "";
     } else {
         alert("Please enter a GitHub username");
     }
@@ -19,22 +21,54 @@ var formSubmitHandler = function (event) {
 var getUserRepos = function (user) {
     // format the github api url
     var apiUrl = "https://api.github.com/users/" + user + "/repos";
-    // make a request to the url
+
+    // make a get request to url
     fetch(apiUrl)
         .then(function (response) {
             // request was successful
             if (response.ok) {
+                console.log(response);
                 response.json().then(function (data) {
+                    console.log(data);
                     displayRepos(data, user);
                 });
             } else {
-                alert('Error: GitHub User Not Found');
+                alert("Error: " + response.statusText);
             }
         })
         .catch(function (error) {
-            // Notice this `.catch()` getting chained onto the end of the `.then()` method
             alert("Unable to connect to GitHub");
         });
+};
+
+var getFeaturedRepos = function (language) {
+    // format the github api url
+    var apiUrl = "https://api.github.com/search/repositories?q=" + language + "+is:featured&sort=help-wanted-issues";
+
+    // make a get request to url
+    fetch(apiUrl).then(function (response) {
+        // request was successful
+        if (response.ok) {
+            response.json().then(function (data) {
+                displayRepos(data.items, language);
+            });
+        } else {
+            alert("Error: " + response.statusText);
+        }
+    });
+};
+
+
+var buttonClickHandler = function (event) {
+    // get the language attribute from the clicked element
+    var language = event.target.getAttribute("data-language");
+
+    if (language) {
+        getFeaturedRepos(language);
+
+        // clear old content
+        repoContainerEl.textContent = "";
+    }
 };
 
 var displayRepos = function (repos, searchTerm) {
@@ -79,5 +113,8 @@ var displayRepos = function (repos, searchTerm) {
     }
 }
 
+
 userFormEl.addEventListener("submit", formSubmitHandler);
+languageButtonsEl.addEventListener("click", buttonClickHandler);
+
 
